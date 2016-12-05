@@ -3,6 +3,6 @@ applications:
   memory: 256M
   instances: 1
   domain: mybluemix.net
-  name: ApkBak
-  host: ApkBak
+  name: BoilerChatRoom
+  host: BoilerChatRoom
   disk_quota: 1024M

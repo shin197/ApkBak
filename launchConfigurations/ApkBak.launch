@@ -7,7 +7,9 @@
       "Space": "ApkBak"
     },
     "Name": "ApkBak",
-    "Instrumentation": {}
+    "Instrumentation": {
+      "host": "ApkBak"
+    }
   },
   "Path": "manifest.yml",
   "Type": "Cloud Foundry"

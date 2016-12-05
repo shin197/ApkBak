@@ -1,99 +1,144 @@
 <!DOCTYPE html>
-<html>
 <head>
-	<title>RanRanRu Chat</title>
+	<title>ApkBakChat</title>
 	<style>
-	canvas{
-		position: absolute;
-		margin:auto;
-		top:0;
-		bottom:0;
-		left:0;
-		right:0;
-	}
+		canvas{
+			position: absolute;
+			margin:auto;
+			top:0;
+			bottom:0;
+			left:0;
+			right:0;
+		}
+		#chat{
+			height:500px;
+		}
+		#contentWrap{
+			display: none;
+		}
+		#chatWrap{
+			float: left;
+			border: 1px #000 solid;
+		}
+		.error{
+			color: red;
+		}
+		.whisper{
+			color: purple;
+			font-style:italic;
+		}
 	</style>
-	
 </head>
 <body>
-	<canvas id="ctx" width = "1600" height="800" style="border:1px solid #000000;"></canvas>
+	<div id="nickWrap">
+		<p>Enter a username:</p>
+		<p id="nickError"></p>
+		<form id="setNick">
+			<input size="35" id="nickname"></input>
+			<input type="submit"></input>
+		</form>
+	</div>
+	<div id="contentWrap">
+		<div id="chatWrap">
+			<div id="chat"></div>
+			<form id="send-message">
+				<input size="35" id="message"></input>
+				<input type="submit"></input>
+			</form>
+			<canvas id="ctx" width = "1000" height="800" style="border:1px solid #000000;"></canvas>
+			<button type="button"onclick="window.open('https://apkbak.mybluemix.net/pong.html')" style="border-width:4; background-color:#ccccff;">Play Pong!</button>
+			<button type="button"onclick="window.open('https://apkbak.mybluemix.net/badday.html')" style="border-width:4; background-color:#ccccff;">Play Bad Day!</button>
+		</div>
+		<div id="users"></div>
+	</div>
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
-	<script>
-		var WIDTH=1600, HEIGHT=800;
-		//var canvas = document.createElement("canvas");
-		var ctx = document.getElementById("ctx").getContext("2d");
-		//document.body.appendChild(canvas);5
-		
-		var socket = io("https://apkbak.mybluemix.net");
-		socket.on("newPositions",function(data){
-			ctx.clearRect(0,0,WIDTH,HEIGHT);
-			for(var i = 0; i < data.length; i++){
-				//console.log(data[i].color);
-				ctx.fillStyle = "hsl("+data[i].color+", 100%, 50%)";
-				ctx.fillRect(data[i].x,data[i].y,20,20);
-				ctx.font="16px Arial";
-				ctx.fillText(data[i].msg,this.x,this.y - 30)	;
-			}
-		});
-		document.onkeydown = function(event){
-			if(event.keyCode === 37)
-				socket.emit("keyPress",{inputId:"left",state:true});
-			else if(event.keyCode === 38)
-				socket.emit("keyPress",{inputId:"up",state:true});
-			else if(event.keyCode === 39)
-				socket.emit("keyPress",{inputId:"right",state:true});
-			else if(event.keyCode === 40)
-				socket.emit("keyPress",{inputId:"down",state:true});
-		}
-		document.onkeyup = function(event){
-			if(event.keyCode === 37)
-				socket.emit("keyPress",{inputId:"left",state:false});
-			else if(event.keyCode === 38)
-				socket.emit("keyPress",{inputId:"up",state:false});
-			else if(event.keyCode === 39)
-				socket.emit("keyPress",{inputId:"right",state:false});
-			else if(event.keyCode === 40)
-				socket.emit("keyPress",{inputId:"down",state:false});
-		}
-	</script>
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+			<script>
+			/*eslint-env jquery */
+			jQuery(function($) {
+				var socket = io.connect('https://apkbak.mybluemix.net/');
+				var $nickForm = $('#setNick');
+				var $nickError = $('#nickError');
+				var $nickBox = $('#nickname');
+				var $users = $('#users');
+				var $messageForm = $('#send-message');
+				var $messageBox = $('#message');
+				var $chat = $('#chat');
+
+				$nickForm.submit(function(e) {
+					e.preventDefault();
+					socket.emit('new user', $nickBox.val(), function(data) {
+						if(data) {
+							$('#nickWrap').hide();
+							$('#contentWrap').show();
+						} else {
+							$nickError.html('The username is already taken! Try again!');
+						}
+					});
+					$nickBox.val('');
+				});
+
+				socket.on('usernames', function(data) {
+					var html = '';
+					for(var i=0; i<data.length; i++) {
+						html += data[i] + '<br/>'
+					}
+					$users.html(html);
+				});
+
+				$messageForm.submit(function(e) {
+					e.preventDefault();
+					socket.emit('send message', $messageBox.val(), function(data) {
+						$chat.append('<span class="error">' + data + '</span>');
+					});
+					$messageBox.val('');
+				});
+
+				socket.on('new message', function(data) {
+					$chat.append('<span class="msg"><b>' + data.nick + ':</b> ' + data.msg + "</span><br/>");
+				});
+
+				socket.on('whisper', function(data) {
+					$chat.append('<span class="whisper"><b>' + data.nick + ':</b> ' + data.msg + "</span><br/>");
+				});
+				
+				var WIDTH=1000, HEIGHT=800;
+				//var canvas = document.createElement("canvas");
+				var ctx = document.getElementById("ctx").getContext("2d");
+				//document.body.appendChild(canvas);5
+				socket.on("newPositions",function(data){
+					ctx.clearRect(0,0,WIDTH,HEIGHT);
+					for(var i = 0; i < data.length; i++){
+						//console.log(data[i].color);
+						ctx.fillStyle = "hsl("+data[i].color+", 100%, 50%)";
+						ctx.fillRect(data[i].x,data[i].y,20,20);
+						ctx.font="16px Arial";
+						ctx.fillText(data[i].nickname,data[i].x -7.5,data[i].y - 5)	;
+					}
+				});
+				document.onkeydown = function(event){
+					if(event.keyCode === 37)
+						socket.emit("keyPress",{inputId:"left",state:true});
+					else if(event.keyCode === 38)
+						socket.emit("keyPress",{inputId:"up",state:true});
+					else if(event.keyCode === 39)
+						socket.emit("keyPress",{inputId:"right",state:true});
+					else if(event.keyCode === 40)
+						socket.emit("keyPress",{inputId:"down",state:true});
+				}
+				document.onkeyup = function(event){
+					if(event.keyCode === 37)
+						socket.emit("keyPress",{inputId:"left",state:false});
+					else if(event.keyCode === 38)
+						socket.emit("keyPress",{inputId:"up",state:false});
+					else if(event.keyCode === 39)
+						socket.emit("keyPress",{inputId:"right",state:false});
+					else if(event.keyCode === 40)
+						socket.emit("keyPress",{inputId:"down",state:false});
+				}
+
+			});
+		</script>
 </body>
 </html>
-
-<!--<!doctype html>
-<html>
-  <head>
-    <title>Socket.IO chat</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
-    </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-    <script type="text/javascript">
-    /*eslint-env jquery */
-    //(function($){
-      var socket = io('https://apkbak.mybluemix.net');
-      $('form').submit(function(){
-        socket.emit('chat message', $('#m').val());
-        $('#m').val('');
-        return false;
-      });
-      socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-    //})(jQuery);
-    </script>
-  </body>
-</html>-->
