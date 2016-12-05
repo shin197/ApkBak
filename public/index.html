@@ -21,6 +21,13 @@
 			float: left;
 			border: 1px #000 solid;
 		}
+		.error{
+			color: red;
+		}
+		.whisper{
+			color: purple;
+			font-style:italic;
+		}
 	</style>
 </head>
 <body>
@@ -80,13 +87,20 @@
 
 				$messageForm.submit(function(e) {
 					e.preventDefault();
-					socket.emit('send message', $messageBox.val());
+					socket.emit('send message', $messageBox.val(), function(data) {
+						$chat.append('<span class="error">' + data + '</span>');
+					});
 					$messageBox.val('');
 				});
 
 				socket.on('new message', function(data) {
-					$chat.append('<b>' + data.nick + ':</b>' + data.msg + "<br/>");
+					$chat.append('<span class="msg"><b>' + data.nick + ':</b> ' + data.msg + "</span><br/>");
 				});
+
+				socket.on('whisper', function(data) {
+					$chat.append('<span class="whisper"><b>' + data.nick + ':</b> ' + data.msg + "</span><br/>");
+				});
+
 			});
 		</script>
 	<script>
