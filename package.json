@@ -1,9 +1,17 @@
 {
-  "name": "chat-app",
-  "version": "0.0.1",
-  "description": "my first socket.io app",
-  "dependencies": {
-    "express": "^4.10.2",
-    "socket.io": "^1.7.1"
-  }
+ "name": "NodejsStarterApp",
+ "version": "0.0.1",
+ "private": true,
+ "scripts": {
+  "start": "node app.js"
+ },
+ "dependencies": {
+  "express": "4.13.x",
+  "cfenv": "1.0.x",
+  "socket.io": "^1.7.1"
+ },
+ "repository": {},
+ "engines": {
+  "node": "4.x"
+ }
 }

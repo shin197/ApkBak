@@ -1,26 +1,130 @@
 <!DOCTYPE html>
 <html>
+<head>
+	<title>RanRanRu Chat</title>
+	<style>
+		canvas{
+			position: absolute;
+			margin:auto;
+			top:0;
+			bottom:0;
+			left:0;
+			right:0;
+		}
+		#chat{
+			height:500px;
+		}
+		#contentWrap{
+			display: none;
+		}
+		#chatWrap{
+			float: left;
+			border: 1px #000 solid;
+		}
+	</style>
+</head>
+<body>
+	<div id="nickWrap">
+		<p>Enter a username:</p>
+		<p id="nickError"></p>
+		<form id="setNick">
+			<input size="35" id="nickname"></input>
+			<input type="submit"></input>
+		</form>
+	</div>
+	<div id="contentWrap">
+		<div id="chatWrap">
+			<div id="chat"></div>
+			<form id="send-message">
+				<input size="35" id="message"></input>
+				<input type="submit"></input>
+			</form>
+			<canvas id="ctx" width = "1000" height="800" style="border:1px solid #000000;"></canvas>
+		</div>
+		<div id="users"></div>
+	</div>
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+			<script>
+			jQuery(function($) {
+				var socket = io.connect();
+				var $nickForm = $('#setNick');
+				var $nickError = $('#nickError');
+				var $nickBox = $('#nickname');
+				var $users = $('#users');
+				var $messageForm = $('#send-message');
+				var $messageBox = $('#message');
+				var $chat = $('#chat');
 
-  <head>
-    <title>NodeJS Starter Application</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="stylesheets/style.css">
-  </head>
+				$nickForm.submit(function(e) {
+					e.preventDefault();
+					socket.emit('new user', $nickBox.val(), function(data) {
+						if(data) {
+							$('#nickWrap').hide();
+							$('#contentWrap').show();
+						} else {
+							$nickError.html('The username is already taken! Try again!');
+						}
+					});
+					$nickBox.val('');
+				});
 
-  <body>
-    <table>
-      <tr>
-        <td style= "width:30%;">
-          <img class = "newappIcon" src="images/newapp-icon.png">
-        </td>
-        <td>
-          <h1 id="message">Hello World!</h1>
-          <p class='description'></p> Thanks for creating a <span class = "blue">NodeJS Starter Application</span>.
-        </td>
-      </tr>
-    </table>
-  </body>
+				socket.on('usernames', function(data) {
+					var html = '';
+					for(i=0; i<data.length; i++) {
+						html += data[i] + '<br/>'
+					}
+					$users.html(html);
+				});
 
+				$messageForm.submit(function(e) {
+					e.preventDefault();
+					socket.emit('send message', $messageBox.val());
+					$messageBox.val('');
+				});
+
+				socket.on('new message', function(data) {
+					$chat.append('<b>' + data.nick + ':</b>' + data.msg + "<br/>");
+				});
+			});
+		</script>
+	<script>
+		var WIDTH=1000, HEIGHT=800;
+		//var canvas = document.createElement("canvas");
+		var ctx = document.getElementById("ctx").getContext("2d");
+		//document.body.appendChild(canvas);5
+		var socket = io("https://apkbak.mybluemix.net");
+		socket.on("newPositions",function(data){
+			ctx.clearRect(0,0,WIDTH,HEIGHT);
+			for(var i = 0; i < data.length; i++){
+				//console.log(data[i].color);
+				ctx.fillStyle = "hsl("+data[i].color+", 100%, 50%)";
+				ctx.fillRect(data[i].x,data[i].y,20,20);
+				ctx.font="16px Arial";
+				ctx.fillText(data[i].msg,this.x,this.y - 30)	;
+			}
+		});
+		document.onkeydown = function(event){
+			if(event.keyCode === 37)
+				socket.emit("keyPress",{inputId:"left",state:true});
+			else if(event.keyCode === 38)
+				socket.emit("keyPress",{inputId:"up",state:true});
+			else if(event.keyCode === 39)
+				socket.emit("keyPress",{inputId:"right",state:true});
+			else if(event.keyCode === 40)
+				socket.emit("keyPress",{inputId:"down",state:true});
+		}
+		document.onkeyup = function(event){
+			if(event.keyCode === 37)
+				socket.emit("keyPress",{inputId:"left",state:false});
+			else if(event.keyCode === 38)
+				socket.emit("keyPress",{inputId:"up",state:false});
+			else if(event.keyCode === 39)
+				socket.emit("keyPress",{inputId:"right",state:false});
+			else if(event.keyCode === 40)
+				socket.emit("keyPress",{inputId:"down",state:false});
+		}
+	</script>
+</body>
 </html>
